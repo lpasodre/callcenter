@@ -300,9 +300,77 @@ function applyTraining(){const scope=document.getElementById('trainScope').value
 function nextCycle(){S.cycle++;S.plannedTMA=Math.max(60,Number(document.getElementById('nextTma').value||S.plannedTMA));let ag=clampAgentCount(document.getElementById('nextAgents').value);S.openPAs=maxOpenPAs(ag);S.scheduledAgentIds=activeAgents().slice(0,ag).map(a=>a.id);prepareCycle();document.getElementById('managementPanel').classList.add('hide');document.getElementById('finishBtn').disabled=false;document.getElementById('pauseBtn').disabled=false;S.running=true;S.paused=false;log(`Novo ciclo iniciado. Planejado: ${ag} atendentes, ${S.openPAs} PAs abertas automaticamente, TMA ${fmtTime(S.plannedTMA)}.`);renderAll();}
 function openConfigGate(){const pass=prompt('Digite a senha para acessar as configurações:');if(pass!=='1234'){alert('Senha incorreta.');return}openConfig();}
 function closeConfig(){document.getElementById('configModal').style.display='none'}
-function openConfig(){document.getElementById('configContent').innerHTML=`<div class="configGrid"><div class="reportBlock"><h3>Geral e meta central</h3><label>Duração ciclo (min)<br><input id="cfg_cycle" type="number" value="${CONFIG.cycleSeconds/60}"></label><br><br><label>Caixa inicial<br><input id="cfg_cash" type="number" value="${CONFIG.initialCash}"></label><br><br><label>NS meta (%)<br><input id="cfg_ns" type="number" value="${CONFIG.nsTargetPct}"></label><br><br><label>Tempo alvo NS (seg)<br><input id="cfg_nssec" type="number" value="${CONFIG.nsTargetSeconds}"></label></div><div class="reportBlock"><h3>Contrato, demanda e receita</h3><label>Chamadas contratadas previstas por ciclo, separadas por vírgula<br><input id="cfg_forecasts" style="width:100%" value="${CONFIG.forecastCalls.join(',')}"></label><br><br><label>Variação demanda (%)<br><input id="cfg_var" type="number" value="${CONFIG.demandVariationPct}"></label><br><br><label>Receita por chamada<br><input id="cfg_rev" type="number" value="${CONFIG.revenuePerCall}"></label></div><div class="reportBlock"><h3>Capacidade e custos</h3><label>PAs instaladas iniciais<br><input id="cfg_pas" type="number" value="${CONFIG.installedPAsInitial}"></label><br><br><label>Máximo PAs<br><input id="cfg_maxpas" type="number" min="1" max="15" value="${CONFIG.maxPAs}"><br><span class="mini">Limite pedagógico desta versão: até 15.</span></label><br><br><label>Custo instalar PA<br><input id="cfg_painstall" type="number" value="${CONFIG.paInstallCost}"></label><br><br><label>Custo PA aberta/ciclo<br><input id="cfg_paopen" type="number" value="${CONFIG.paOpenCost}"></label><br><br><label>Atendentes iniciais<br><input id="cfg_agents" type="number" value="${CONFIG.initialAgents}"></label><br><br><label>Máximo atendentes<br><input id="cfg_maxagents" type="number" min="1" max="15" value="${CONFIG.maxAgents}"><br><span class="mini">Limite pedagógico desta versão: até 15.</span></label><br><br><label>Custo atendente/ciclo<br><input id="cfg_agentcost" type="number" value="${CONFIG.agentCycleCost}"></label><br><br><label>Custo contratação<br><input id="cfg_hire" type="number" value="${CONFIG.hireCost}"></label></div><div class="reportBlock"><h3>Eventos e qualidade</h3><label>Chance falta (%)<br><input id="cfg_abs" type="number" value="${Math.round(CONFIG.absenceChance*100)}"></label><br><br><label>Chance atraso (%)<br><input id="cfg_delay" type="number" value="${Math.round(CONFIG.delayChance*100)}"></label><br><br><label>Duração da pausa almoço (seg)<br><input id="cfg_pause" type="number" value="${CONFIG.pauseDuration}"></label><br><br><label>Pausa banheiro (seg)<br><input id="cfg_bathdur" type="number" value="${CONFIG.bathroomDuration}"></label><br><br><label>Abandono após espera (seg)<br><input id="cfg_abandon" type="number" value="${CONFIG.abandonmentSeconds}"></label><br><br><label>Meta FCR (%)<br><input id="cfg_fcr" type="number" value="${CONFIG.fcrTargetPct}"></label><br><br><label>Meta rechamada (%)<br><input id="cfg_cb" type="number" value="${CONFIG.callbackTargetPct}"></label><br><br><label>Meta reclamações (%)<br><input id="cfg_comp" type="number" value="${CONFIG.complaintTargetPct}"></label><br><br><label>Penalidade reclamação<br><input id="cfg_pen" type="number" value="${CONFIG.complaintPenalty}"></label></div></div>`;document.getElementById('configModal').style.display='flex';}
+function openConfig(){document.getElementById('configContent').innerHTML=`<div class="configGrid"><div class="reportBlock"><h3>Geral e meta central</h3><label>Duração ciclo (min)<br><input id="cfg_cycle" type="number" value="${CONFIG.cycleSeconds/60}"></label><br><br><label>Caixa atual da operação<br><input id="cfg_cash" type="number" value="${S?S.cash:CONFIG.initialCash}"></label><br><br><label>NS meta (%)<br><input id="cfg_ns" type="number" value="${CONFIG.nsTargetPct}"></label><br><br><label>Tempo alvo NS (seg)<br><input id="cfg_nssec" type="number" value="${CONFIG.nsTargetSeconds}"></label></div><div class="reportBlock"><h3>Contrato, demanda e receita</h3><label>Chamadas contratadas previstas por ciclo, separadas por vírgula<br><input id="cfg_forecasts" style="width:100%" value="${CONFIG.forecastCalls.join(',')}"></label><br><br><label>Variação demanda (%)<br><input id="cfg_var" type="number" value="${CONFIG.demandVariationPct}"></label><br><br><label>Receita por chamada<br><input id="cfg_rev" type="number" value="${CONFIG.revenuePerCall}"></label></div><div class="reportBlock"><h3>Capacidade e custos</h3><label>PAs instaladas atuais<br><input id="cfg_pas" type="number" value="${S?S.installedPAs:CONFIG.installedPAsInitial}"></label><br><br><label>Máximo PAs<br><input id="cfg_maxpas" type="number" min="1" max="15" value="${CONFIG.maxPAs}"><br><span class="mini">Limite pedagógico desta versão: até 15.</span></label><br><br><label>Custo instalar PA<br><input id="cfg_painstall" type="number" value="${CONFIG.paInstallCost}"></label><br><br><label>Custo PA aberta/ciclo<br><input id="cfg_paopen" type="number" value="${CONFIG.paOpenCost}"></label><br><br><label>Atendentes ativos atuais<br><input id="cfg_agents" type="number" value="${S?activeAgents().length:CONFIG.initialAgents}"></label><br><br><label>Máximo atendentes<br><input id="cfg_maxagents" type="number" min="1" max="15" value="${CONFIG.maxAgents}"><br><span class="mini">Limite pedagógico desta versão: até 15.</span></label><br><br><label>Custo atendente/ciclo<br><input id="cfg_agentcost" type="number" value="${CONFIG.agentCycleCost}"></label><br><br><label>Custo contratação<br><input id="cfg_hire" type="number" value="${CONFIG.hireCost}"></label></div><div class="reportBlock"><h3>Eventos e qualidade</h3><label>Chance falta (%)<br><input id="cfg_abs" type="number" value="${Math.round(CONFIG.absenceChance*100)}"></label><br><br><label>Chance atraso (%)<br><input id="cfg_delay" type="number" value="${Math.round(CONFIG.delayChance*100)}"></label><br><br><label>Duração da pausa almoço (seg)<br><input id="cfg_pause" type="number" value="${CONFIG.pauseDuration}"></label><br><br><label>Pausa banheiro (seg)<br><input id="cfg_bathdur" type="number" value="${CONFIG.bathroomDuration}"></label><br><br><label>Abandono após espera (seg)<br><input id="cfg_abandon" type="number" value="${CONFIG.abandonmentSeconds}"></label><br><br><label>Meta FCR (%)<br><input id="cfg_fcr" type="number" value="${CONFIG.fcrTargetPct}"></label><br><br><label>Meta rechamada (%)<br><input id="cfg_cb" type="number" value="${CONFIG.callbackTargetPct}"></label><br><br><label>Meta reclamações (%)<br><input id="cfg_comp" type="number" value="${CONFIG.complaintTargetPct}"></label><br><br><label>Penalidade reclamação<br><input id="cfg_pen" type="number" value="${CONFIG.complaintPenalty}"></label></div></div>`;document.getElementById('configModal').style.display='flex';}
 function val(id,def){const n=parseFloat(document.getElementById(id)?.value);return Number.isFinite(n)?n:def}
-function applyConfig(){CONFIG.cycleSeconds=Math.max(60,Math.round(val('cfg_cycle',CONFIG.cycleSeconds/60)*60));CONFIG.initialCash=val('cfg_cash',CONFIG.initialCash);CONFIG.nsTargetPct=val('cfg_ns',CONFIG.nsTargetPct);CONFIG.nsTargetSeconds=val('cfg_nssec',CONFIG.nsTargetSeconds);CONFIG.forecastCalls=(document.getElementById('cfg_forecasts').value||'34,29,42').split(',').map(x=>Math.max(1,Math.round(parseFloat(x)||0))).filter(Boolean);CONFIG.demandVariationPct=val('cfg_var',CONFIG.demandVariationPct);CONFIG.revenuePerCall=val('cfg_rev',CONFIG.revenuePerCall);CONFIG.installedPAsInitial=val('cfg_pas',CONFIG.installedPAsInitial);CONFIG.maxPAs=val('cfg_maxpas',CONFIG.maxPAs);CONFIG.paInstallCost=val('cfg_painstall',CONFIG.paInstallCost);CONFIG.paOpenCost=val('cfg_paopen',CONFIG.paOpenCost);CONFIG.initialAgents=Math.max(1,Math.round(val('cfg_agents',CONFIG.initialAgents)));CONFIG.maxAgents=Math.min(15,Math.max(1,Math.round(val('cfg_maxagents',CONFIG.maxAgents))));CONFIG.initialAgents=Math.min(CONFIG.initialAgents,CONFIG.maxAgents);CONFIG.maxPAs=Math.min(15,Math.max(1,Math.round(CONFIG.maxPAs)));CONFIG.installedPAsInitial=Math.max(1,Math.min(Math.round(CONFIG.installedPAsInitial),CONFIG.maxPAs));CONFIG.agentCycleCost=val('cfg_agentcost',CONFIG.agentCycleCost);CONFIG.hireCost=val('cfg_hire',CONFIG.hireCost);CONFIG.absenceChance=val('cfg_abs',CONFIG.absenceChance*100)/100;CONFIG.delayChance=val('cfg_delay',CONFIG.delayChance*100)/100;CONFIG.pauseDuration=val('cfg_pause',CONFIG.pauseDuration);CONFIG.bathroomDuration=val('cfg_bathdur',CONFIG.bathroomDuration);CONFIG.abandonmentSeconds=val('cfg_abandon',CONFIG.abandonmentSeconds);CONFIG.fcrTargetPct=val('cfg_fcr',CONFIG.fcrTargetPct);CONFIG.callbackTargetPct=val('cfg_cb',CONFIG.callbackTargetPct);CONFIG.complaintTargetPct=val('cfg_comp',CONFIG.complaintTargetPct);CONFIG.complaintPenalty=val('cfg_pen',CONFIG.complaintPenalty);if(S){S.forecastPlan=makeForecastPlan();S.installedPAs=Math.max(1,Math.min(Math.round(S.installedPAs||CONFIG.installedPAsInitial),CONFIG.maxPAs));if(S.openPAs)S.openPAs=maxOpenPAs(Math.min(S.scheduledAgentIds.length||activeAgents().length,activeAgents().length)); if(!S.running&&S.cycle===1&&S.agents.length!==CONFIG.initialAgents){S.agents=[];for(let i=0;i<CONFIG.initialAgents;i++)S.agents.push(makeAgent(i));S.installedPAs=CONFIG.installedPAsInitial;S.openPAs=maxOpenPAs(Math.min(8,activeAgents().length));} updateHeader();renderSetup();renderAll();}closeConfig();}
+function applyConfig(){
+  const oldRunning = S?.running;
+  const newCycleSeconds = Math.max(60,Math.round(val('cfg_cycle',CONFIG.cycleSeconds/60)*60));
+  const newCash = val('cfg_cash', S?S.cash:CONFIG.initialCash);
+  const newInstalledPAs = Math.round(val('cfg_pas', S?S.installedPAs:CONFIG.installedPAsInitial));
+  const newActiveAgents = Math.max(1,Math.round(val('cfg_agents', S?activeAgents().length:CONFIG.initialAgents)));
+
+  CONFIG.cycleSeconds=newCycleSeconds;
+  CONFIG.initialCash=newCash;
+  CONFIG.nsTargetPct=val('cfg_ns',CONFIG.nsTargetPct);
+  CONFIG.nsTargetSeconds=val('cfg_nssec',CONFIG.nsTargetSeconds);
+  CONFIG.forecastCalls=(document.getElementById('cfg_forecasts').value||'34,29,42').split(',').map(x=>Math.max(1,Math.round(parseFloat(x)||0))).filter(Boolean);
+  CONFIG.demandVariationPct=val('cfg_var',CONFIG.demandVariationPct);
+  CONFIG.revenuePerCall=val('cfg_rev',CONFIG.revenuePerCall);
+  CONFIG.maxPAs=Math.min(15,Math.max(1,Math.round(val('cfg_maxpas',CONFIG.maxPAs))));
+  CONFIG.installedPAsInitial=Math.max(1,Math.min(newInstalledPAs,CONFIG.maxPAs));
+  CONFIG.paInstallCost=val('cfg_painstall',CONFIG.paInstallCost);
+  CONFIG.paOpenCost=val('cfg_paopen',CONFIG.paOpenCost);
+  CONFIG.maxAgents=Math.min(15,Math.max(1,Math.round(val('cfg_maxagents',CONFIG.maxAgents))));
+  CONFIG.initialAgents=Math.min(Math.max(1,newActiveAgents),CONFIG.maxAgents);
+  CONFIG.agentCycleCost=val('cfg_agentcost',CONFIG.agentCycleCost);
+  CONFIG.hireCost=val('cfg_hire',CONFIG.hireCost);
+  CONFIG.absenceChance=val('cfg_abs',CONFIG.absenceChance*100)/100;
+  CONFIG.delayChance=val('cfg_delay',CONFIG.delayChance*100)/100;
+  CONFIG.pauseDuration=val('cfg_pause',CONFIG.pauseDuration);
+  CONFIG.bathroomDuration=val('cfg_bathdur',CONFIG.bathroomDuration);
+  CONFIG.abandonmentSeconds=val('cfg_abandon',CONFIG.abandonmentSeconds);
+  CONFIG.fcrTargetPct=val('cfg_fcr',CONFIG.fcrTargetPct);
+  CONFIG.callbackTargetPct=val('cfg_cb',CONFIG.callbackTargetPct);
+  CONFIG.complaintTargetPct=val('cfg_comp',CONFIG.complaintTargetPct);
+  CONFIG.complaintPenalty=val('cfg_pen',CONFIG.complaintPenalty);
+
+  if(S){
+    // Parâmetros que devem refletir imediatamente no estado atual da simulação.
+    S.cash = newCash;
+    S.forecastPlan = makeForecastPlan();
+    S.installedPAs = CONFIG.installedPAsInitial;
+    S.stats.costFixed = CONFIG.fixedCost;
+    if(S.elapsed>CONFIG.cycleSeconds) S.elapsed=CONFIG.cycleSeconds;
+
+    // Ajuste administrativo da equipe pelo professor: só altera a composição fora da operação.
+    // Durante a operação, preserva a escala do ciclo e aplica a mudança estrutural no momento gerencial/próximo ciclo.
+    if(!oldRunning){
+      let active=activeAgents();
+      while(active.length<CONFIG.initialAgents){
+        S.agents.push(makeAgent(S.agents.length));
+        active=activeAgents();
+      }
+      if(active.length>CONFIG.initialAgents){
+        active.slice(CONFIG.initialAgents).forEach(a=>{a.active=false;a.dismissedCycle=S.cycle;});
+      }
+      S.scheduledAgentIds=S.scheduledAgentIds.filter(id=>activeAgents().some(a=>a.id===id));
+      S.openPAs=maxOpenPAs(Math.min(S.scheduledAgentIds.length||activeAgents().length,activeAgents().length));
+    }else{
+      // Se estiver rodando, não mexe na escala já aberta; apenas garante que não ultrapasse a estrutura atual.
+      S.openPAs=Math.min(S.openPAs,maxOpenPAs(S.scheduledAgentIds.length||activeAgents().length));
+    }
+
+    const planAgents=document.getElementById('planAgents');
+    if(planAgents){planAgents.max=activeAgents().length;planAgents.value=Math.min(Number(planAgents.value)||activeAgents().length,activeAgents().length);}
+    const nextAgents=document.getElementById('nextAgents');
+    if(nextAgents){nextAgents.max=activeAgents().length;nextAgents.value=Math.min(Number(nextAgents.value)||activeAgents().length,activeAgents().length);}
+    updateHeader();
+    renderSetup();
+    renderAll();
+    log('Configurações atualizadas: caixa, metas, demanda, custos e capacidade foram sincronizados com o estado da operação.');
+  }
+  closeConfig();
+}
 function rand(a,b){return Math.floor(a+Math.random()*(b-a+1));}
 window.addEventListener('input',e=>{if(['planAgents','planTma','nextAgents','nextTma'].includes(e.target.id)){updateCapacityPreview(e.target.id.startsWith('next'));renderManagement();}});
 window.addEventListener('load',()=>{initState();renderSetup();});
